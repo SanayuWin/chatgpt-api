@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat with AI (WebSocket)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    #messages {
+      border: 1px solid #ccc;
+      padding: 10px;
+      height: 300px;
+      overflow-y: auto;
+      margin-bottom: 10px;
+    }
+    input[type="text"] {
+      width: calc(100% - 120px);
+      padding: 10px;
+    }
+    button {
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Chat with AI</h1>
+  <div id="messages"></div>
+  <form id="chat-form">
+    <input type="text" id="user-input" placeholder="Type your message here" required />
+    <button type="submit">Send</button>
+  </form>
+
+  <script>
+    const messagesDiv = document.getElementById("messages");
+    const userInput = document.getElementById("user-input");
+    const chatForm = document.getElementById("chat-form");
+
+    // Establish WebSocket connection
+    const socket = new WebSocket("ws://localhost:3000");
+
+    socket.addEventListener("open", () => {
+      appendMessage("Connected to the server.");
+    });
+
+    socket.addEventListener("message", (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.error) {
+        appendMessage("Error: " + data.error);
+      } else if (data.response) {
+        appendMessage("AI: " + data.response);
+      }
+    });
+
+    socket.addEventListener("close", () => {
+      appendMessage("Disconnected from the server.");
+    });
+
+    chatForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      const message = userInput.value.trim();
+      if (!message) return;
+
+      appendMessage("You: " + message);
+      userInput.value = "";
+
+      // Send message to the server
+      socket.send(JSON.stringify({ content: message }));
+    });
+
+    function appendMessage(message) {
+      const messageElement = document.createElement("div");
+      messageElement.textContent = message;
+      messagesDiv.appendChild(messageElement);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+  </script>
+</body>
+</html>
